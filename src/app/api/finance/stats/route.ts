@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { financeService } from '@/lib/services/finance-service';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const startDate = searchParams.get('startDate') 
       ? new Date(searchParams.get('startDate')!) 
       : new Date(new Date().setDate(new Date().getDate() - 30));
