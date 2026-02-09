@@ -8,6 +8,8 @@ export type Product = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  display_color?: string;
+  image?: string;
 };
 
 export type ProductVariant = {

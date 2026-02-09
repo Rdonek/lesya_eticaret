@@ -5,15 +5,19 @@ import { cn } from '@/lib/utils';
 
 type AdminHeaderProps = {
   title: string;
+  description?: string;
   children?: React.ReactNode;
   className?: string;
 };
 
-export function AdminHeader({ title, children, className }: AdminHeaderProps) {
+export function AdminHeader({ title, description, children, className }: AdminHeaderProps) {
   return (
     <div className={cn("flex flex-col gap-4 md:flex-row md:items-center md:justify-between px-1 py-2", className)}>
       <div className="space-y-0.5">
         <h1 className="text-lg font-bold tracking-tight text-neutral-900">{title}</h1>
+        {description && (
+          <p className="text-xs font-medium text-neutral-400 uppercase tracking-widest">{description}</p>
+        )}
       </div>
       <div className="flex items-center gap-3">
         {children}

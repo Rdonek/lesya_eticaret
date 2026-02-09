@@ -29,6 +29,7 @@ export const analyticsService = {
       .order('created_at', { ascending: true });
 
     if (error) throw error;
+    console.log('DEBUG - Raw Orders from DB:', orders);
 
     // Group by date
     const grouped = orders.reduce((acc, order) => {
@@ -54,7 +55,8 @@ export const analyticsService = {
       .select(`
         quantity,
         unit_price,
-        product_snapshot
+        product_snapshot,
+        product_variant_id
       `)
       // We should ideally filter by order status, but let's assume all order_items in DB are valid or check parent order
       // For speed/simplicity in MVP, we might skip the parent join if we trust the flow, 
@@ -66,22 +68,29 @@ export const analyticsService = {
     if (error) throw error;
 
     const productStats = items.reduce((acc, item: any) => {
-      const p = item.product_snapshot;
-      // Snapshot structure depends on how we saved it. Assuming it has id and name.
-      if (!p || !p.id) return acc;
+      let p = item.product_snapshot;
       
-      if (!acc[p.id]) {
-        acc[p.id] = {
-           id: p.id,
-           name: p.name,
+      // Ensure p is an object
+      if (typeof p === 'string') {
+        try { p = JSON.parse(p); } catch(e) { return acc; }
+      }
+
+      // Check for ID in snapshot, fallback to parent item's variant ID
+      const pId = p?.id || p?.product_id || p?.variant_id || item.product_variant_id;
+      if (!pId) return acc;
+      
+      if (!acc[pId]) {
+        acc[pId] = {
+           id: pId,
+           name: p.name || 'Bilinmeyen Ürün',
            image: p.image || '',
            totalSold: 0,
            totalRevenue: 0
         };
       }
       
-      acc[p.id].totalSold += item.quantity;
-      acc[p.id].totalRevenue += (item.quantity * Number(item.unit_price));
+      acc[pId].totalSold += (item.quantity || 0);
+      acc[pId].totalRevenue += ((item.quantity || 0) * Number(item.unit_price || 0));
       return acc;
     }, {} as Record<string, TopProduct>);
 

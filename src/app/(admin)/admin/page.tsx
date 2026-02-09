@@ -38,6 +38,12 @@ export default function AdminDashboardPage() {
   // Bezier Curve Logic for smoother chart
   const getPath = (data: DailyRevenue[], width: number, height: number) => {
     if (data.length === 0) return '';
+    if (data.length === 1) {
+        // If only one data point, draw a simple horizontal line or dot
+        const val = height - (data[0].revenue / (Math.max(data[0].revenue, 1))) * height * 0.8;
+        return `M 0,${val} L ${width},${val}`;
+    }
+    
     const maxVal = Math.max(...data.map(d => d.revenue)) || 1;
     const stepX = width / (data.length - 1);
     

@@ -1,5 +1,7 @@
 import { Product, ProductVariant } from './database';
 
+export type { Product, ProductVariant };
+
 export type ProductImage = {
   id: string;
   product_id: string;

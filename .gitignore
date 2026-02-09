@@ -25,7 +25,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
-.env*.local
+
+lesya_mobile/
 
 # vercel
 .vercel

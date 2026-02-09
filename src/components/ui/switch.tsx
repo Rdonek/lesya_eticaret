@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-interface SwitchProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface SwitchProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
 }
