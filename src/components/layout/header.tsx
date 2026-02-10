@@ -67,7 +67,7 @@ export function Header() {
             )}
             title="Sipariş Takibi"
           >
-            <Package size={18} md:size={20} strokeWidth={2} />
+            <Package strokeWidth={2} className="w-[18px] h-[18px] md:w-[20px] md:h-[20px]" />
           </Link>
 
           <a 
@@ -76,11 +76,11 @@ export function Header() {
             rel="noopener noreferrer"
             className="p-2 text-neutral-900 transition-all hover:text-neutral-400 hover:scale-110"
           >
-            <Instagram size={18} md:size={20} strokeWidth={2} />
+            <Instagram strokeWidth={2} className="w-[18px] h-[18px] md:w-[20px] md:h-[20px]" />
           </a>
 
           <Link href={ROUTES.CART} className="group relative p-2">
-            <ShoppingBag size={18} md:size={20} strokeWidth={2} className="text-neutral-900 transition-transform group-hover:scale-110" />
+            <ShoppingBag strokeWidth={2} className="text-neutral-900 transition-transform group-hover:scale-110 w-[18px] h-[18px] md:w-[20px] md:h-[20px]" />
             {mounted && cartItemsCount > 0 && (
               <span className="absolute right-0.5 top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-neutral-900 text-[8px] font-black text-white shadow-sm">
                 {cartItemsCount}
