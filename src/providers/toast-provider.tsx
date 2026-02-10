@@ -35,8 +35,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/* Toast Container - Fixed to TOP RIGHT globally */}
-      <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 w-full max-w-[320px] pointer-events-none md:top-8 md:right-8">
+      {/* Toast Container - Fixed to TOP RIGHT globally with maximum priority */}
+      <div className="fixed top-20 right-4 z-[99999] flex flex-col gap-3 w-full max-w-[320px] pointer-events-none md:top-24 md:right-8">
         {toasts.map((toast) => (
           <div
             key={toast.id}
