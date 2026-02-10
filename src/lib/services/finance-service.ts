@@ -106,6 +106,8 @@ export const financeService = {
     const netProfit = netRevenue - totalCOGS - operationalExpenses;
     const margin = grossRevenue > 0 ? (netProfit / grossRevenue) * 100 : 0;
 
+    console.log(`[FinanceService] Stats Calculated: Revenue=${grossRevenue}, Profit=${netProfit}, Margin=${margin}%`);
+    
     return {
       grossRevenue,
       netRevenue,
@@ -118,10 +120,20 @@ export const financeService = {
   },
 
   async getInventoryValue() {
+    console.log('[FinanceService] Calculating Inventory Value...');
     const supabase = createAdminClient();
-    const { data } = await supabase.from('product_variants').select('stock, cost_price');
+    const { data, error } = await supabase.from('product_variants').select('stock, cost_price, id');
+    
+    if (error) {
+        console.error('[FinanceService] Inventory Fetch Error:', error);
+        return { totalValue: 0, totalItems: 0 };
+    }
+
     const totalValue = data?.reduce((sum, v) => sum + (Number(v.stock) * Number(v.cost_price || 0)), 0) || 0;
     const totalItems = data?.reduce((sum, v) => sum + Number(v.stock), 0) || 0;
+    
+    console.log(`[FinanceService] Inventory Result: ${totalItems} Items, Value: ${totalValue} TL (From ${data?.length} variants)`);
+    
     return { totalValue, totalItems };
   },
 
