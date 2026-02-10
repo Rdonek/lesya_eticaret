@@ -9,8 +9,7 @@ import { ProductGallery } from '@/components/product/product-gallery';
 import { AccordionItem } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60; // 1 minute cache is enough for a smooth balance
 
 type ProductDetailPageProps = {
   params: {

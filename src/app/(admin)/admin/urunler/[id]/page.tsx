@@ -12,6 +12,7 @@ import { formatPrice } from '@/lib/utils/format';
 import Link from 'next/link';
 import { categoryService, Category } from '@/lib/services/category-service';
 import { StockEntryModal } from '@/components/admin/stock-entry-modal';
+import { revalidateProductAction } from '@/app/actions/product';
 
 type ProductEditPageProps = {
   params: {
@@ -114,6 +115,10 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
       }
 
       showToast('Tüm değişiklikler kaydedildi.');
+      
+      // Clear Storefront Cache
+      revalidateProductAction(product.slug);
+
       fetchProductData();
     } catch (error) {
       showToast('Kaydetme sırasında bir hata oluştu', 'error');
