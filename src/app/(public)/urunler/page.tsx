@@ -18,15 +18,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     productService.getAll()
   ]);
 
-  console.log(`[ProductsPage] Total Products Found: ${allProducts.length}`);
-
   const activeCategory = categories.find(c => c.slug === searchParams.kategori);
 
   let filteredProducts = activeCategory
     ? allProducts.filter((p: any) => p.category_id === activeCategory.id)
     : allProducts;
-
-  console.log(`[ProductsPage] Filtered Products: ${filteredProducts.length} (Category: ${activeCategory?.name || 'All'})`);
 
   if (searchParams.sort === 'price_asc') {
     filteredProducts.sort((a, b) => a.price - b.price);

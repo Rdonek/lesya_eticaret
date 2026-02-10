@@ -50,13 +50,9 @@ export const productService = {
         .eq('is_active', true)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('[ProductService] Fetch Error:', error);
-        throw error;
-      }
+      if (error) throw error;
       return this._transform(data || []);
     } catch (e) {
-      console.error('[ProductService] Fatal Exception:', e);
       return [];
     }
   },
