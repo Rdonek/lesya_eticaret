@@ -172,11 +172,12 @@ export default async function OrderPage({ params, searchParams }: OrderPageProps
 
         <div className="text-center pt-8">
             <p className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest mb-4">Bir sorunuz mu var?</p>
-            <Link href="mailto:hello@lesyastudio.com">
-                <Button variant="ghost" className="text-xs font-bold text-neutral-400 hover:text-neutral-900 uppercase tracking-widest transition-all">
-                    Destek Ekibine Yaz
-                </Button>
-            </Link>
+            <a 
+                href={`mailto:hello@lesyastudio.com?subject=Sipariş Destek: #${order.order_number}`}
+                className="inline-flex items-center justify-center text-xs font-bold text-neutral-400 hover:text-neutral-900 uppercase tracking-widest transition-all h-10 px-6 rounded-xl hover:bg-neutral-100"
+            >
+                Destek Ekibine Yaz
+            </a>
         </div>
 
       </div>
