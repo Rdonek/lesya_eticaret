@@ -48,7 +48,7 @@ export const emailService = {
         <body>
           <div class="wrapper">
             <div class="header">
-              <a href="https://lesya.com">
+              <a href="https://lesyastudio.com">
                 <img src="${LOGO_URL}" alt="LESYA" width="140" style="display: block; margin: 0 auto;">
               </a>
             </div>
@@ -57,7 +57,7 @@ export const emailService = {
             </div>
             <div class="footer">
               &copy; ${new Date().getFullYear()} LESYA. Tüm hakları saklıdır.<br>
-              Sorularınız için <a href="mailto:destek@lesya.com" style="color: ${COLORS.text}">destek@lesya.com</a>
+              Sorularınız için <a href="mailto:destek@lesyastudio.com" style="color: ${COLORS.text}">destek@lesyastudio.com</a>
             </div>
           </div>
         </body>
@@ -112,12 +112,12 @@ export const emailService = {
       </div>
 
       <div style="text-align: center;">
-        <a href="https://lesya.com/siparis/${order.id}" class="btn">Siparişi Görüntüle</a>
+        <a href="https://lesyastudio.com/siparis/${order.id}" class="btn">Siparişi Görüntüle</a>
       </div>
     `;
 
     return resend.emails.send({
-      from: 'LESYA <onboarding@resend.dev>',
+      from: 'LESYA <hello@lesyastudio.com>',
       to: order.email,
       subject: `Sipariş Onayı: #${order.order_number}`,
       html: this.getHtmlWrapper(content, 'Siparişiniz başarıyla alındı.'),
@@ -147,7 +147,7 @@ export const emailService = {
     `;
 
     return resend.emails.send({
-      from: 'LESYA <onboarding@resend.dev>',
+      from: 'LESYA <hello@lesyastudio.com>',
       to: order.email,
       subject: `Ödeme Hatası: #${order.order_number}`,
       html: this.getHtmlWrapper(content, 'Ödeme işleminiz tamamlanamadı.'),
@@ -172,12 +172,12 @@ export const emailService = {
       <p>Kargonun durumunu anlık olarak takip edebilirsin.</p>
 
       <div style="text-align: center;">
-        <a href="#" class="btn">Kargomu Takip Et</a>
+        <a href="https://lesyastudio.com/siparis/${order.id}" class="btn">Kargomu Takip Et</a>
       </div>
     `;
 
     return resend.emails.send({
-      from: 'LESYA <onboarding@resend.dev>',
+      from: 'LESYA <hello@lesyastudio.com>',
       to: order.email,
       subject: `Kargoya Verildi: #${order.order_number}`,
       html: this.getHtmlWrapper(content, 'Siparişiniz kargoya verildi.'),
@@ -197,12 +197,12 @@ export const emailService = {
       <p>Eğer bir sorun varsa veya iade etmek istersen, 14 gün süren var.</p>
 
       <div style="text-align: center;">
-        <a href="https://lesya.com/iletisim" class="btn btn-outline">Bir Sorun Mu Var?</a>
+        <a href="https://lesyastudio.com/iletisim" class="btn btn-outline">Bir Sorun Mu Var?</a>
       </div>
     `;
 
     return resend.emails.send({
-      from: 'LESYA <onboarding@resend.dev>',
+      from: 'LESYA <hello@lesyastudio.com>',
       to: order.email,
       subject: `Teslim Edildi: #${order.order_number}`,
       html: this.getHtmlWrapper(content, 'Siparişiniz teslim edildi.'),
@@ -228,7 +228,7 @@ export const emailService = {
     `;
 
     return resend.emails.send({
-      from: 'LESYA <onboarding@resend.dev>',
+      from: 'LESYA <hello@lesyastudio.com>',
       to: order.email,
       subject: `Sipariş İptali: #${order.order_number}`,
       html: this.getHtmlWrapper(content, 'Siparişiniz iptal edildi.'),
