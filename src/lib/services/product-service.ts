@@ -196,8 +196,10 @@ export const productService = {
 
     // 2. Calculate Weighted Average Cost (WAC)
     // Formula: ((Old Stock * Old Cost) + (New Stock * New Cost)) / Total Stock
+    // Handle edge case: if current stock is negative (due to some error), treat as 0 for calculation
+    const baseStock = Math.max(0, currentStock);
     const weightedAverageCost = totalStockAfter > 0 
-        ? ((currentStock * currentCost) + (newQuantity * newUnitCost)) / totalStockAfter 
+        ? ((baseStock * currentCost) + (newQuantity * newUnitCost)) / totalStockAfter 
         : newUnitCost;
 
     // 3. Create Inventory Log (Record the actual purchase unit cost for history)

@@ -153,8 +153,43 @@ export default function AdminProductsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Left Column: Categories Sidebar */}
-        <aside className="lg:col-span-3 space-y-6">
+        {/* Mobile Category Rail (Visible only on Mobile/Tablet) */}
+        <div className="lg:hidden -mx-4 px-4 overflow-x-auto pb-4 no-scrollbar flex items-center gap-2">
+            <button 
+              onClick={() => setSelectedCategoryId(null)} 
+              className={cn(
+                "whitespace-nowrap px-6 py-2.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all border",
+                !selectedCategoryId 
+                  ? "bg-neutral-900 text-white border-neutral-900 shadow-lg shadow-neutral-900/10" 
+                  : "bg-white text-neutral-500 border-neutral-100"
+              )}
+            >
+              Tümü
+            </button>
+            {categories.map((cat) => (
+              <button 
+                key={cat.id}
+                onClick={() => setSelectedCategoryId(cat.id)} 
+                className={cn(
+                  "whitespace-nowrap px-6 py-2.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all border",
+                  selectedCategoryId === cat.id 
+                    ? "bg-neutral-900 text-white border-neutral-900 shadow-lg shadow-neutral-900/10" 
+                    : "bg-white text-neutral-500 border-neutral-100"
+                )}
+              >
+                {cat.name}
+              </button>
+            ))}
+            <button 
+              onClick={() => setIsAddingCategory(true)}
+              className="h-9 w-9 shrink-0 rounded-2xl bg-neutral-100 flex items-center justify-center text-neutral-900"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+        </div>
+
+        {/* Left Column: Categories Sidebar (Visible only on Desktop) */}
+        <aside className="hidden lg:block lg:col-span-3 space-y-6">
           <div className="rounded-[28px] bg-white border border-neutral-100 p-6 shadow-sm space-y-6">
             <div className="flex items-center justify-between px-2">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Kategoriler</h3>
@@ -194,6 +229,12 @@ export default function AdminProductsPage() {
 
         {/* Right Column: Products List */}
         <main className="lg:col-span-9 space-y-6">
+          {/* Mobile Status Switcher */}
+          <div className="flex lg:hidden p-1 bg-neutral-100 rounded-xl gap-1 mb-2">
+            <button onClick={() => setActiveTab('active')} className={cn("flex-1 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all", activeTab === 'active' ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-400")}>Satışta</button>
+            <button onClick={() => setActiveTab('archived')} className={cn("flex-1 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all", activeTab === 'archived' ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-400")}>Arşiv</button>
+          </div>
+
           <div className="relative group w-full">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 group-focus-within:text-neutral-900 transition-colors" />
             <Input placeholder="Ürünlerde ara..." className="pl-11 h-12 rounded-2xl border-neutral-100 bg-white shadow-sm focus:ring-4 focus:ring-neutral-900/5 transition-all" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />

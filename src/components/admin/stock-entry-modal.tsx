@@ -39,12 +39,25 @@ export function StockEntryModal({ isOpen, onClose, variant, onSuccess }: StockEn
   const handleSubmit = async () => {
     if (!variant) return;
     
+    const qty = parseInt(quantity);
+    const unitCost = parseFloat(cost);
+
+    if (isNaN(qty) || qty <= 0) {
+      showToast('Lütfen geçerli bir adet girin (en az 1).', 'error');
+      return;
+    }
+
+    if (isNaN(unitCost) || unitCost < 0) {
+      showToast('Lütfen geçerli bir maliyet girin.', 'error');
+      return;
+    }
+    
     setLoading(true);
     try {
       await productService.addStockWithFinance({
         variantId: variant.id,
-        quantity: parseInt(quantity),
-        unitCost: parseFloat(cost),
+        quantity: qty,
+        unitCost: unitCost,
         recordAsExpense
       });
 

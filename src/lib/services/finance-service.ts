@@ -153,5 +153,69 @@ export const financeService = {
         date: transaction.date || new Date().toISOString(),
         source: (transaction as any).source || 'manual'
     });
+  },
+
+  /**
+   * ROLLBACK (UNDO) Transaction
+   * 1. If Inventory: Reverses stock and refund money
+   * 2. If Expense: Refund money (Income)
+   * 3. If Income: Deduct money (Expense)
+   */
+  async rollbackTransaction(transactionId: string) {
+    const supabase = createAdminClient();
+
+    // 1. Get the transaction details
+    const { data: tx, error } = await supabase
+        .from('finances')
+        .select('*')
+        .eq('id', transactionId)
+        .single();
+
+    if (error || !tx) throw new Error("İşlem bulunamadı.");
+
+    // 2. Handle Inventory Rollback (The Hard Part)
+    if (tx.category === 'inventory' && tx.related_id) {
+        // Fetch the inventory log to know which product and how many
+        const { data: log } = await supabase
+            .from('inventory_logs')
+            .select('*')
+            .eq('id', tx.related_id)
+            .single();
+
+        if (log) {
+            // Restore (Decrease) Stock
+            const { data: variant } = await supabase
+                .from('product_variants')
+                .select('stock')
+                .eq('id', log.product_variant_id)
+                .single();
+
+            if (variant) {
+                const newStock = Math.max(0, (variant.stock || 0) - log.quantity);
+                await supabase
+                    .from('product_variants')
+                    .update({ stock: newStock })
+                    .eq('id', log.product_variant_id);
+            }
+        }
+    }
+
+    // 3. Delete the transaction record (Or mark as void? Deleting is cleaner for MVP)
+    // Actually, for audit logs, it is better to insert a COUNTER-TRANSACTION.
+    // But user asked to "fix/reset" erroneous entry. So we will DELETE the erroneous entry 
+    // AND revert its effects.
+    
+    // However, if we delete it, we lose history. 
+    // Let's DELETE it for simplicity in this Admin Dashboard context, 
+    // as it is presented as "Removing a mistake".
+    
+    await supabase.from('finances').delete().eq('id', transactionId);
+    
+    // Also delete related inventory log if exists
+    if (tx.related_id && tx.category === 'inventory') {
+        await supabase.from('inventory_logs').delete().eq('id', tx.related_id);
+    }
+
+    return true;
   }
 };

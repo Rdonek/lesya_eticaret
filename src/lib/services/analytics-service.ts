@@ -45,6 +45,42 @@ export const analyticsService = {
     return Object.values(grouped);
   },
 
+  async getRevenueStats(): Promise<{ total: number; percentage: number }> {
+    const supabase = createClient();
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('created_at, total_amount')
+      .neq('status', 'cancelled')
+      .gte('created_at', sixtyDaysAgo.toISOString());
+
+    if (error) throw error;
+
+    let currentRevenue = 0;
+    let previousRevenue = 0;
+
+    orders.forEach(order => {
+      const orderDate = new Date(order.created_at);
+      if (orderDate >= thirtyDaysAgo) {
+        currentRevenue += Number(order.total_amount);
+      } else {
+        previousRevenue += Number(order.total_amount);
+      }
+    });
+
+    let percentage = 0;
+    if (previousRevenue > 0) {
+      percentage = ((currentRevenue - previousRevenue) / previousRevenue) * 100;
+    } else if (currentRevenue > 0) {
+      percentage = 100;
+    }
+
+    return { total: currentRevenue, percentage };
+  },
+
   async getTopProducts(limit = 5): Promise<TopProduct[]> {
     const supabase = createClient();
 

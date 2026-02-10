@@ -6,10 +6,12 @@ import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/providers/toast-provider';
-import { ChevronLeft, Trash2, Archive, Save, Loader2, RefreshCw } from 'lucide-react';
+import { ChevronLeft, Trash2, Archive, Save, Loader2, RefreshCw, PackagePlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils/format';
 import Link from 'next/link';
 import { categoryService, Category } from '@/lib/services/category-service';
+import { StockEntryModal } from '@/components/admin/stock-entry-modal';
 
 type ProductEditPageProps = {
   params: {
@@ -27,6 +29,10 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
   const [product, setProduct] = React.useState<any>(null);
   const [variants, setVariants] = React.useState<any[]>([]);
   const [categories, setCategories] = React.useState<Category[]>([]);
+
+  // Stock Modal State
+  const [selectedVariant, setSelectedVariant] = React.useState<any>(null);
+  const [isStockModalOpen, setIsStockModalOpen] = React.useState(false);
 
   const fetchProductData = React.useCallback(async () => {
     setLoading(true);
@@ -69,8 +75,16 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
   const handleVariantUpdate = (id: string, field: string, value: string) => {
     setVariants(variants.map(v => v.id === id ? { 
         ...v, 
-        [field]: field === 'stock' ? (parseInt(value) || 0) : parseFloat(value) 
+        [field]: parseFloat(value) 
     } : v));
+  };
+
+  const handleStockClick = (v: any) => {
+    setSelectedVariant({
+      ...v,
+      products: { name: product.name }
+    });
+    setIsStockModalOpen(true);
   };
 
   const handleSave = async () => {
@@ -89,11 +103,11 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
 
       if (prodError) throw prodError;
 
+      // Update variants (ONLY COST AND PRICE, NOT STOCK)
       for (const v of variants) {
         await supabase
           .from('product_variants')
           .update({ 
-            stock: v.stock,
             cost_price: v.cost_price 
           })
           .eq('id', v.id);
@@ -211,30 +225,6 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
                 <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Satış Fiyatı (TL)</label>
                 <Input type="number" className="h-12 rounded-xl bg-neutral-50 border-transparent focus:bg-white focus:border-neutral-200" value={product.base_price} onChange={(e) => handleProductUpdate('base_price', e.target.value)} />
               </div>
-              
-              {/* NEW: General Cost Field with Apply All */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between ml-1">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Genel Maliyet (TL)</label>
-                    <button 
-                        onClick={() => {
-                            const cost = parseFloat(product.default_cost || '0');
-                            setVariants(variants.map(v => ({ ...v, cost_price: cost })));
-                            showToast('Tüm varyant maliyetleri güncellendi');
-                        }}
-                        className="text-[10px] font-bold text-blue-600 hover:underline uppercase tracking-tighter"
-                    >
-                        Tümüne Uygula
-                    </button>
-                </div>
-                <Input 
-                    type="number" 
-                    placeholder="Hızlı giriş için..."
-                    className="h-12 rounded-xl bg-neutral-50 border-transparent focus:bg-white focus:border-neutral-200" 
-                    value={product.default_cost || ''} 
-                    onChange={(e) => handleProductUpdate('default_cost', e.target.value)} 
-                />
-              </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Kategori</label>
@@ -273,11 +263,21 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
                                 <p className="font-bold text-neutral-900 text-sm">{v.color}</p>
                                 <p className="text-[10px] font-bold uppercase text-neutral-400">Beden: {v.size}</p>
                             </div>
-                            <div className="col-span-4">
-                                <Input type="number" className="h-10 rounded-lg text-center bg-white border-neutral-200 text-sm" value={v.stock} onChange={(e) => handleVariantUpdate(v.id, 'stock', e.target.value)} />
+                            <div className="col-span-4 flex items-center gap-2">
+                                <div className="flex-1 h-10 rounded-lg bg-white border border-neutral-200 flex items-center justify-center font-mono font-bold text-sm text-neutral-900 select-none">
+                                  {v.stock}
+                                </div>
+                                <button 
+                                    onClick={() => handleStockClick(v)}
+                                    className="h-10 w-10 rounded-lg bg-neutral-900 text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-md shadow-neutral-900/10"
+                                >
+                                    <PackagePlus size={16} />
+                                </button>
                             </div>
                             <div className="col-span-4">
-                                <Input type="number" step="0.01" className="h-10 rounded-lg text-center bg-white border-neutral-200 text-sm" value={v.cost_price || 0} onChange={(e) => handleVariantUpdate(v.id, 'cost_price', e.target.value)} />
+                                <div className="h-10 rounded-lg bg-neutral-100/50 border border-neutral-100 flex items-center justify-center font-mono text-xs font-bold text-neutral-400 select-none">
+                                  {formatPrice(v.cost_price || 0)}
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -293,6 +293,16 @@ export default function ProductEditPage({ params }: ProductEditPageProps) {
           Değişiklikleri Kaydet
         </Button>
       </div>
+
+      <StockEntryModal 
+        isOpen={isStockModalOpen}
+        onClose={() => {
+            setIsStockModalOpen(false);
+            setSelectedVariant(null);
+        }}
+        variant={selectedVariant}
+        onSuccess={fetchProductData}
+      />
     </div>
   );
 }

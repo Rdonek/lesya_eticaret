@@ -16,6 +16,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [debouncedSearch, setDebouncedSearch] = React.useState('');
   const [activeTab, setActiveTab] = React.useState<OrderStatusFilter>('all');
   const [selectedOrderId, setSelectedOrderId] = React.useState<string | null>(null);
   const [isShipping, setIsShipping] = React.useState(false);
@@ -23,13 +24,32 @@ export default function AdminOrdersPage() {
   const { showToast } = useToast();
   const supabase = createClient();
 
+  // Debounce search query
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const fetchOrders = React.useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    
+    let query = supabase
       .from('orders')
       .select('*, order_items(*)')
       .neq('status', ORDER_STATUS.PENDING) 
       .order('created_at', { ascending: false });
+
+    // Server-side filtering
+    if (activeTab !== 'all') {
+      query = query.eq('status', activeTab);
+    }
+
+    // Server-side search
+    if (debouncedSearch) {
+      query = query.or(`customer_name.ilike.%${debouncedSearch}%,order_number.ilike.%${debouncedSearch}%`);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       showToast('Siparişler yüklenemedi', 'error');
@@ -37,7 +57,7 @@ export default function AdminOrdersPage() {
       setOrders(data || []);
     }
     setLoading(false);
-  }, [supabase, showToast]);
+  }, [supabase, showToast, activeTab, debouncedSearch]);
 
   React.useEffect(() => {
     fetchOrders();
@@ -71,15 +91,10 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         order.order_number.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTab = activeTab === 'all' || order.status === activeTab;
-    return matchesSearch && matchesTab;
-  });
+  const filteredOrders = orders; // Now filtered by server
 
   const stats = {
-    all: orders.length,
+    all: orders.length, // Note: This might need a separate total count query if paginated
     paid: orders.filter(o => o.status === ORDER_STATUS.PAID).length,
     shipped: orders.filter(o => o.status === ORDER_STATUS.SHIPPED).length,
     cancelled: orders.filter(o => o.status === ORDER_STATUS.CANCELLED).length,

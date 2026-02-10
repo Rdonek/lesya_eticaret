@@ -81,8 +81,14 @@ export async function shipOrderAction(orderId: string, trackingNumber: string) {
         .eq('key', 'shipping')
         .single();
     
-    if (settingsError) console.warn("Settings fetch failed, using default fee 30");
-    const standardFee = (setting?.value as any)?.standard_fee || 30;
+    if (settingsError || !setting?.value) {
+      throw new Error("Kargo ayarları bulunamadı. Lütfen Ayarlar > Kargo kısmından standart ücreti belirleyin.");
+    }
+    
+    const standardFee = (setting.value as any).standard_fee;
+    if (typeof standardFee !== 'number') {
+      throw new Error("Geçerli bir kargo ücreti ayarlanmamış.");
+    }
 
     // 2. Update Order Status & Actual Cost
     const { data: order, error: orderFetchError } = await supabase

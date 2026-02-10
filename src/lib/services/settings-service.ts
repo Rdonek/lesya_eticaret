@@ -26,20 +26,23 @@ export const settingsService = {
       .from('store_settings')
       .select('key, value');
 
-    if (error) {
-      console.error('Error fetching settings:', error);
-      return {
-        shipping: { free_threshold: 500, standard_fee: 30 },
-        tax: { vat_rate: 20 },
-        store_status: { is_active: true, message: '' },
-        contact: { whatsapp: '', email: '', phone: '' }
-      };
+    if (error || !data || data.length === 0) {
+      console.error('Critical Error: Store settings could not be retrieved from DB.', error);
+      throw new Error('Mağaza ayarları veritabanından alınamadı. Lütfen sistem yöneticisi ile iletişime geçin.');
     }
 
     const settings: any = {};
     data.forEach(item => {
       settings[item.key] = item.value;
     });
+
+    // Ensure all required keys exist, if not throw
+    const requiredKeys = ['shipping', 'tax', 'store_status', 'contact'];
+    for (const key of requiredKeys) {
+        if (!settings[key]) {
+            throw new Error(`Kritik ayar eksik: ${key}. Lütfen Ayarlar sayfasından bu alanı güncelleyin.`);
+        }
+    }
 
     return settings as StoreSettings;
   },

@@ -24,14 +24,16 @@ export default function AdminFinancePage() {
   const [transactions, setTransactions] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [processingId, setProcessingId] = React.useState<string | null>(null);
   const { showToast } = useToast();
 
   const fetchData = React.useCallback(async () => {
     setLoading(true);
     try {
+      // FORCE NO CACHE for production
       const [statsRes, transRes] = await Promise.all([
-        fetch('/api/finance/stats'),
-        fetch('/api/finance/transactions')
+        fetch('/api/finance/stats', { cache: 'no-store', headers: { 'Pragma': 'no-cache' } }),
+        fetch('/api/finance/transactions', { cache: 'no-store', headers: { 'Pragma': 'no-cache' } })
       ]);
 
       if (!statsRes.ok || !transRes.ok) throw new Error('Veri yüklenemedi');
@@ -44,6 +46,25 @@ export default function AdminFinancePage() {
       setLoading(false);
     }
   }, [showToast]);
+
+  const handleDeleteTransaction = async (id: string, type: string) => {
+    if (!confirm('Bu işlemi ve etkilerini (varsa stok girişini) geri almak istediğinize emin misiniz?')) return;
+    
+    setProcessingId(id);
+    try {
+        const res = await fetch(`/api/finance/transactions?id=${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            showToast('İşlem geri alındı.');
+            fetchData();
+        } else {
+            showToast('Silinemedi.', 'error');
+        }
+    } catch (e) {
+        showToast('Hata oluştu', 'error');
+    } finally {
+        setProcessingId(null);
+    }
+  };
 
   React.useEffect(() => {
     fetchData();
@@ -185,10 +206,20 @@ export default function AdminFinancePage() {
                                     </p>
                                 </div>
                             </div>
-                            <div className="text-right pl-4">
+                            <div className="text-right pl-4 flex items-center gap-4">
                                 <p className={cn("text-sm font-bold tabular-nums", tx.type === 'income' ? "text-emerald-600" : "text-neutral-900")}>
                                     {tx.type === 'income' ? '+' : '-'}{formatPrice(tx.amount)}
                                 </p>
+                                {(tx.source === 'manual' || tx.source === 'system_purchase') && (
+                                    <button 
+                                        onClick={() => handleDeleteTransaction(tx.id, tx.category)}
+                                        disabled={processingId === tx.id}
+                                        className="h-8 w-8 rounded-lg bg-neutral-100 text-neutral-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100"
+                                        title="İşlemi Geri Al / Sil"
+                                    >
+                                        {processingId === tx.id ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Receipt className="h-3 w-3 rotate-45" />}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}

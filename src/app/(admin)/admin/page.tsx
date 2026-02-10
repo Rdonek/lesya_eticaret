@@ -12,17 +12,20 @@ import { AdminHeader } from '@/components/admin/header';
 export default function AdminDashboardPage() {
   const [trend, setTrend] = React.useState<DailyRevenue[]>([]);
   const [topProducts, setTopProducts] = React.useState<TopProduct[]>([]);
+  const [revenueStats, setRevenueStats] = React.useState<{ total: number; percentage: number }>({ total: 0, percentage: 0 });
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     const loadData = async () => {
       try {
-        const [trendData, productsData] = await Promise.all([
+        const [trendData, productsData, statsData] = await Promise.all([
             analyticsService.getSalesTrend(30),
-            analyticsService.getTopProducts(5)
+            analyticsService.getTopProducts(5),
+            analyticsService.getRevenueStats()
         ]);
         setTrend(trendData);
         setTopProducts(productsData);
+        setRevenueStats(statsData);
       } catch (e) {
         toast.error('Veriler yüklenirken hata oluştu');
       } finally {
@@ -32,7 +35,7 @@ export default function AdminDashboardPage() {
     loadData();
   }, []);
 
-  const totalRevenue = trend.reduce((sum, day) => sum + day.revenue, 0);
+  const totalRevenue = revenueStats.total;
   const totalOrders = trend.reduce((sum, day) => sum + day.orderCount, 0);
 
   // Bezier Curve Logic for smoother chart
@@ -63,17 +66,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-32">
       
-      <AdminHeader title="Genel Bakış">
-        <div className="flex items-center gap-2">
-            <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 text-green-700 text-[10px] font-bold uppercase tracking-wider border border-green-100">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-                Canlı
-            </span>
-        </div>
-      </AdminHeader>
+      <AdminHeader title="Genel Bakış" />
 
       {/* Primary Grid: Main Stats + Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -95,7 +88,12 @@ export default function AdminDashboardPage() {
                         <p className="text-4xl font-black tracking-tighter mt-1">{formatPrice(totalRevenue)}</p>
                     </div>
                     <div className="pt-4 border-t border-white/10 flex items-center gap-2">
-                        <span className="text-emerald-400 font-bold text-sm">+%12</span>
+                        <span className={cn(
+                          "font-bold text-sm",
+                          revenueStats.percentage >= 0 ? "text-emerald-400" : "text-rose-400"
+                        )}>
+                          {revenueStats.percentage >= 0 ? '+' : ''}{revenueStats.percentage.toFixed(1)}%
+                        </span>
                         <span className="text-neutral-500 text-xs font-medium">geçen aya göre</span>
                     </div>
                 </div>
