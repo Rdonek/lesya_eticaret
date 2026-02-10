@@ -50,6 +50,15 @@ export function Header() {
             >
                 Koleksiyon
             </Link>
+            <Link 
+                href="/takip"
+                className={cn(
+                    "hidden md:block text-[11px] font-black uppercase tracking-[0.2em] transition-colors hover:text-neutral-500",
+                    pathname === "/takip" ? "text-neutral-900 underline underline-offset-8 decoration-2" : "text-neutral-400"
+                )}
+            >
+                Sipariş Takibi
+            </Link>
         </div>
 
         {/* Center: Logo */}

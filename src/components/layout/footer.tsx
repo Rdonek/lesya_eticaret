@@ -25,6 +25,7 @@ export function Footer() {
           {/* Minimal Navigation */}
           <nav className="flex flex-wrap justify-center gap-x-8 gap-y-4">
             <Link href="/urunler" className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-neutral-900 transition-colors">Ürünler</Link>
+            <Link href="/takip" className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-neutral-900 transition-colors">Sipariş Takibi</Link>
             {email && (
                 <a href={`mailto:${email}`} className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-neutral-900 transition-colors">İletişim</a>
             )}

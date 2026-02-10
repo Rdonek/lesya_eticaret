@@ -233,5 +233,44 @@ export const emailService = {
       subject: `Sipariş İptali: #${order.order_number}`,
       html: this.getHtmlWrapper(content, 'Siparişiniz iptal edildi.'),
     });
+  },
+
+  /**
+   * 6. FORGOT ORDER NUMBERS
+   */
+  async sendForgotOrderNumbers(email: string, orders: any[]) {
+    if (!resend) return;
+
+    const ordersHtml = orders.map((o: any) => `
+      <div class="info-box" style="margin: 12px 0;">
+        <span class="label">${new Date(o.created_at).toLocaleDateString('tr-TR')} Tarihli Sipariş</span>
+        <p class="value" style="font-family: monospace; font-size: 18px;">#${o.order_number}</p>
+        <div style="font-size: 12px; color: ${COLORS.secondary}; margin-top: 4px;">
+          Tutar: ${o.total_amount} TL | Durum: ${o.status.toUpperCase()}
+        </div>
+      </div>
+    `).join('');
+
+    const content = `
+      <h1>Sipariş Bilgileriniz 🔑</h1>
+      <p>Merhaba, sipariş numaranızı hatırlatmamız için bir talepte bulundunuz. Sistemimizde kayıtlı olan son siparişleriniz aşağıdadır:</p>
+      
+      <div style="margin: 24px 0;">
+        ${ordersHtml}
+      </div>
+
+      <p>Bu siparişleri aşağıdaki butona tıklayarak sorgulayabilirsiniz.</p>
+
+      <div style="text-align: center;">
+        <a href="https://lesyastudio.com/takip" class="btn">Sipariş Takibi</a>
+      </div>
+    `;
+
+    return resend.emails.send({
+      from: 'LESYA <hello@lesyastudio.com>',
+      to: email,
+      subject: `Sipariş Bilgileriniz`,
+      html: this.getHtmlWrapper(content, 'Unuttuğunuz sipariş numaraları.'),
+    });
   }
 };

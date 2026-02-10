@@ -5,13 +5,35 @@ import { emailService } from '@/lib/services/email-service';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { orderId, type } = body;
+    const { orderId, type, email } = body;
 
-    if (!orderId || !type) {
+    if (!type) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
     const supabase = createAdminClient();
+
+    // Special case for forgot_order_number
+    if (type === 'forgot_order_number' && email) {
+        const { data: orders, error: ordersError } = await supabase
+            .from('orders')
+            .select('order_number, total_amount, created_at, status')
+            .eq('email', email.toLowerCase().trim())
+            .order('created_at', { ascending: false })
+            .limit(5);
+        
+        if (ordersError || !orders || orders.length === 0) {
+            return NextResponse.json({ error: 'No orders found' }, { status: 404 });
+        }
+
+        await emailService.sendForgotOrderNumbers(email, orders);
+        return NextResponse.json({ success: true });
+    }
+
+    if (!orderId) {
+        return NextResponse.json({ error: 'Order ID required' }, { status: 400 });
+    }
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select(`
