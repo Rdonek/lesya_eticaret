@@ -1,10 +1,12 @@
 import { AnimatedSplashScreen } from "@/components/shared/AnimatedSplash";
 import { useAuth } from "@/hooks/use-auth";
+import { usePushToken } from "@/hooks/use-push-token";
 import { queryClient } from "@/lib/query-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
+import * as Notifications from 'expo-notifications';
 import { useEffect, useState } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../assets/global.css";
@@ -12,7 +14,17 @@ import "../assets/global.css";
 // Prevent native splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
-
+// --- NOTIFICATION HANDLER ---
+// Uygulama aÃ§Ä±kken bildirim gelince ne olacaÄŸÄ±nÄ± belirler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 function RootLayoutNav() {
   const { session, initialized } = useAuthStore();
@@ -22,6 +34,9 @@ function RootLayoutNav() {
 
   // Initialize Auth Listener
   useAuth();
+  
+  // Initialize Push Notifications
+  usePushToken();
 
   useEffect(() => {
     if (!initialized || !isSplashComplete) return;

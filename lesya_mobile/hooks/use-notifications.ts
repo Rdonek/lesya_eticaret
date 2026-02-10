@@ -1,10 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import { Notification } from '@/types/notification';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Alert } from 'react-native';
 
 /**
- * Fetch all notifications for current user
- * Sorted by created_at DESC (newest first)
+ * Fetch all notifications
  */
 export function useNotifications() {
   return useQuery({
@@ -18,8 +18,7 @@ export function useNotifications() {
 
       if (error) throw error;
       return data || [];
-    },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    }
   });
 }
 
@@ -28,7 +27,7 @@ export function useNotifications() {
  */
 export function useUnreadCount() {
   return useQuery({
-    queryKey: ['notifications', 'unread-count'],
+    queryKey: ['unread-notifications-count'],
     queryFn: async (): Promise<number> => {
       const { count, error } = await supabase
         .from('notifications')
@@ -37,13 +36,12 @@ export function useUnreadCount() {
 
       if (error) throw error;
       return count || 0;
-    },
-    refetchInterval: 30000,
+    }
   });
 }
 
 /**
- * Mark notification as read
+ * Mark a single notification as read (with Optimistic Update)
  */
 export function useMarkAsRead() {
   const queryClient = useQueryClient();
@@ -52,18 +50,34 @@ export function useMarkAsRead() {
     mutationFn: async (notificationId: string) => {
       const { error } = await supabase
         .from('notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString(),
-        })
+        .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('id', notificationId);
-
       if (error) throw error;
     },
-    onSuccess: () => {
-      // Invalidate both queries to refresh UI
+    onMutate: async (id) => {
+      // Cancel refetches to not overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      
+      // Snapshot previous value
+      const previousNotifications = queryClient.getQueryData<Notification[]>(['notifications']);
+
+      // Optimistically update to the new value
+      if (previousNotifications) {
+        queryClient.setQueryData(['notifications'], 
+          previousNotifications.map(n => n.id === id ? { ...n, is_read: true } : n)
+        );
+      }
+
+      return { previousNotifications };
+    },
+    onError: (err, id, context) => {
+      if (context?.previousNotifications) {
+        queryClient.setQueryData(['notifications'], context.previousNotifications);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });
     },
   });
 }
@@ -78,23 +92,27 @@ export function useMarkAllAsRead() {
     mutationFn: async () => {
       const { error } = await supabase
         .from('notifications')
-        .update({
-          is_read: true,
-          read_at: new Date().toISOString(),
-        })
+        .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('is_read', false);
-
       if (error) throw error;
     },
     onSuccess: () => {
+      // Immediately update local cache for instant UI feedback
+      queryClient.setQueryData(['notifications'], (old: Notification[]) => 
+        old?.map(n => ({ ...n, is_read: true }))
+      );
+      queryClient.setQueryData(['unread-notifications-count'], 0);
+      
+      // Then revalidate in background
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });
     },
+    onError: () => Alert.alert('Hata', 'İşlem tamamlanamadı.')
   });
 }
 
 /**
- * Delete notification
+ * Delete a notification
  */
 export function useDeleteNotification() {
   const queryClient = useQueryClient();
@@ -105,12 +123,11 @@ export function useDeleteNotification() {
         .from('notifications')
         .delete()
         .eq('id', notificationId);
-
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
+      queryClient.invalidateQueries({ queryKey: ['unread-notifications-count'] });
     },
   });
 }

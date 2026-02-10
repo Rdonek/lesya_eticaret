@@ -4,7 +4,7 @@
     "slug": "lesya",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/lesya_favicon/Lesya_nobg.png",
+    "icon": "./assets/lesya_favicon/android/play_store_512.png",
     "scheme": "lesya",
     "userInterfaceStyle": "dark",
     "ios": {
@@ -14,13 +14,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#000000",
-        "foregroundImage": "./assets/lesya_favicon/Lesya_nobg.png",
-        "monochromeImage": "./assets/lesya_favicon/Lesya_nobg.png"
+        "foregroundImage": "./assets/lesya_favicon/android/res/mipmap-xxxhdpi/lesya_launcher_foreground.png",
+        "backgroundImage": "./assets/lesya_favicon/android/res/mipmap-xxxhdpi/lesya_launcher_background.png",
+        "monochromeImage": "./assets/lesya_favicon/android/res/mipmap-xxxhdpi/lesya_launcher_monochrome.png",
+        "backgroundColor": "#000000"
       },
+      "icon": "./assets/lesya_favicon/android/play_store_512.png",
       "package": "com.lesyastudio.mobile",
       "edgeToEdgeEnabled": true,
-      "backgroundColor": "#000000"
+      "backgroundColor": "#000000",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -42,7 +45,15 @@
           }
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/lesya_favicon/android/res/mipmap-xxxhdpi/lesya_launcher_monochrome.png",
+          "color": "#000000",
+          "defaultChannel": "default"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

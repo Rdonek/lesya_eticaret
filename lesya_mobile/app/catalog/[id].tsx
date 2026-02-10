@@ -308,7 +308,7 @@ export default function ProductEditScreen() {
                         <Body className="font-bold text-sm">{v.color}</Body>
                         <Caption>Beden: {v.size}</Caption>
                     </View>
-                    <View style={{ alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, border: 1, borderColor: '#e5e5e5' }}>
+                    <View style={{ alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#e5e5e5' }}>
                         <Text style={{ fontSize: 8, fontWeight: '900', color: '#a3a3a3' }}>STOK</Text>
                         <Text style={{ fontSize: 12, fontWeight: '900', color: '#000' }}>{v.stock}</Text>
                     </View>

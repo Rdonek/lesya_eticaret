@@ -168,7 +168,10 @@ export default function FinanceScreen() {
                     <Text style={{ color: '#dc2626', fontWeight: 'bold', fontSize: 12 }}>-{formatPrice(stats?.periodExpense || 0)}</Text>
                 </View>
                 <View className="w-full bg-neutral-50 h-1.5 rounded-full overflow-hidden">
-                    <View className="bg-rose-500 h-full rounded-full" style={{ width: stats?.periodIncome ? Math.min(100, (stats.periodExpense / stats.periodIncome) * 100) + '%' : '0%' }} />
+                    <View 
+                        className="bg-rose-500 h-full rounded-full" 
+                        style={{ width: (stats?.periodIncome ? Math.min(100, (stats.periodExpense / stats.periodIncome) * 100) : 0) + ('%' as any) }} 
+                    />
                 </View>
             </View>
           </View>

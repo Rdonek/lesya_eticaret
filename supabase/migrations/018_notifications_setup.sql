@@ -41,29 +41,33 @@ CREATE INDEX idx_notifications_type ON public.notifications(type, created_at DES
 -- Row Level Security
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can only see their own notifications or broadcast notifications
+-- Policy: Users can view own notifications or broadcast notifications
 CREATE POLICY "Users can view own notifications" 
-ON public.notifications FOR SELECT 
+ON public.notifications FOR SELECT
 USING (
     auth.uid() = user_id OR user_id IS NULL
 );
 
 -- Policy: Admins can create notifications
-CREATE POLICY "Admins can create notifications" 
-ON public.notifications FOR INSERT 
+CREATE POLICY "Admins can create notifications"
+ON public.notifications FOR INSERT
 TO authenticated
 WITH CHECK (true);
 
--- Policy: Users can update their own notifications (mark as read)
+-- Policy: Users can update own notifications (mark as read)
+DROP POLICY IF EXISTS "Users can update own notifications" ON public.notifications;
 CREATE POLICY "Users can update own notifications" 
 ON public.notifications FOR UPDATE 
-USING (auth.uid() = user_id)
-WITH CHECK (auth.uid() = user_id);
+TO authenticated
+USING (auth.uid() = user_id OR user_id IS NULL)
+WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
 
--- Policy: Users can delete their own notifications
+-- Policy: Users can delete own notifications
+DROP POLICY IF EXISTS "Users can delete own notifications" ON public.notifications;
 CREATE POLICY "Users can delete own notifications" 
 ON public.notifications FOR DELETE 
-USING (auth.uid() = user_id);
+TO authenticated
+USING (auth.uid() = user_id OR user_id IS NULL);
 
 -- Function: Auto-create notification on new order
 CREATE OR REPLACE FUNCTION public.notify_admin_new_order()
@@ -73,7 +77,7 @@ DECLARE
 BEGIN
     -- Get first admin user (adjust query based on your user management)
     SELECT id INTO admin_user_id FROM auth.users LIMIT 1;
-    
+
     IF admin_user_id IS NOT NULL THEN
         INSERT INTO public.notifications (
             user_id,
@@ -91,7 +95,7 @@ BEGIN
             jsonb_build_object('action', 'open_order', 'order_number', NEW.order_number)
         );
     END IF;
-    
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -128,7 +132,7 @@ BEGIN
             )
         );
     END IF;
-    
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -162,7 +166,7 @@ BEGIN
             jsonb_build_object('variant_id', NEW.id, 'sku', NEW.sku, 'stock', NEW.stock)
         );
     END IF;
-    
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

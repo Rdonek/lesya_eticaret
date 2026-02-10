@@ -16,23 +16,21 @@ export const productService = {
         const colorVariants = variantsByColor[color];
         const totalStock = colorVariants.reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
 
-        if (totalStock > 0) {
-          const colorImages = product.product_images
-            .filter((img: any) => img.color?.toLowerCase() === color.toLowerCase())
-            .sort((a: any, b: any) => a.display_order - b.display_order);
+        const colorImages = product.product_images
+          .filter((img: any) => img.color?.toLowerCase() === color.toLowerCase())
+          .sort((a: any, b: any) => a.display_order - b.display_order);
 
-          transformed.push({
-            ...product,
-            id: `${product.id}-${color}`, 
-            originalId: product.id,
-            displayColor: color,
-            price: colorVariants[0]?.price || product.base_price,
-            image: colorImages[0]?.url || product.product_images[0]?.url,
-            variants: colorVariants,
-            totalStock: totalStock,
-            categoryName: product.categories?.name
-          });
-        }
+        transformed.push({
+          ...product,
+          id: `${product.id}-${color}`, 
+          originalId: product.id,
+          displayColor: color,
+          price: colorVariants[0]?.price || product.base_price,
+          image: colorImages[0]?.url || product.product_images[0]?.url,
+          variants: colorVariants,
+          totalStock: totalStock,
+          categoryName: product.categories?.name
+        });
       });
     });
     return transformed;
