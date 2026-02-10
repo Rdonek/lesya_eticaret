@@ -74,7 +74,12 @@ export async function POST(request: Request) {
 
       // Trigger Confirmation Email
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+        let baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+        if (!baseUrl && process.env.VERCEL_URL) {
+            baseUrl = `https://${process.env.VERCEL_URL}`;
+        }
+        if (!baseUrl) baseUrl = 'http://localhost:3000';
+
         await fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -132,7 +137,12 @@ export async function POST(request: Request) {
 
       // Trigger Payment Failed Email
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+        let baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+        if (!baseUrl && process.env.VERCEL_URL) {
+            baseUrl = `https://${process.env.VERCEL_URL}`;
+        }
+        if (!baseUrl) baseUrl = 'http://localhost:3000';
+
         await fetch(`${baseUrl}/api/send-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
