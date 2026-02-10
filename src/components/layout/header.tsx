@@ -34,14 +34,14 @@ export function Header() {
           : 'bg-white py-5 border-b border-transparent'
       )}
     >
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 md:px-10">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 md:px-10">
         
-        {/* Left: Desktop Navigation */}
-        <div className="flex flex-1 items-center gap-4 md:gap-6">
+        {/* Left: Desktop Navigation (Hidden on Mobile) */}
+        <div className="flex-1 hidden md:flex items-center gap-6">
             <Link 
                 href={ROUTES.PRODUCTS}
                 className={cn(
-                    "hidden md:block text-[11px] font-black uppercase tracking-[0.2em] transition-colors hover:text-neutral-500",
+                    "text-[11px] font-black uppercase tracking-[0.2em] transition-colors hover:text-neutral-500",
                     pathname === ROUTES.PRODUCTS ? "text-neutral-900 underline underline-offset-8 decoration-2" : "text-neutral-400"
                 )}
             >
@@ -49,13 +49,16 @@ export function Header() {
             </Link>
         </div>
 
+        {/* Mobile Left Spacer (to keep logo centered) */}
+        <div className="flex-1 md:hidden" />
+
         {/* Center: Logo */}
-        <Link href={ROUTES.HOME} className="flex shrink-0 items-center transition-transform hover:scale-[1.02] active:scale-95 duration-300">
-          <img src="/logo.svg" alt="LESYA" className={cn("transition-all duration-500", isScrolled ? "h-6" : "h-8 md:h-10")} />
+        <Link href={ROUTES.HOME} className="flex shrink-0 items-center justify-center transition-transform hover:scale-[1.02] active:scale-95 duration-300">
+          <img src="/logo.svg" alt="LESYA" className={cn("transition-all duration-500", isScrolled ? "h-5 md:h-6" : "h-7 md:h-10")} />
         </Link>
 
         {/* Right: Icons */}
-        <div className="flex flex-1 items-center justify-end gap-1 md:gap-3">
+        <div className="flex-1 flex items-center justify-end gap-0.5 md:gap-3">
           <Link 
             href="/takip"
             className={cn(
@@ -64,7 +67,7 @@ export function Header() {
             )}
             title="Sipariş Takibi"
           >
-            <Package size={20} strokeWidth={2} />
+            <Package size={18} md:size={20} strokeWidth={2} />
           </Link>
 
           <a 
@@ -73,13 +76,13 @@ export function Header() {
             rel="noopener noreferrer"
             className="p-2 text-neutral-900 transition-all hover:text-neutral-400 hover:scale-110"
           >
-            <Instagram size={20} strokeWidth={2} />
+            <Instagram size={18} md:size={20} strokeWidth={2} />
           </a>
 
           <Link href={ROUTES.CART} className="group relative p-2">
-            <ShoppingBag size={20} strokeWidth={2} className="text-neutral-900 transition-transform group-hover:scale-110" />
+            <ShoppingBag size={18} md:size={20} strokeWidth={2} className="text-neutral-900 transition-transform group-hover:scale-110" />
             {mounted && cartItemsCount > 0 && (
-              <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-neutral-900 text-[9px] font-black text-white shadow-sm">
+              <span className="absolute right-0.5 top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-neutral-900 text-[8px] font-black text-white shadow-sm">
                 {cartItemsCount}
               </span>
             )}
