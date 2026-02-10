@@ -38,19 +38,27 @@ export const productService = {
 
   async getAll() {
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from('products')
-      .select(`
-        *,
-        categories (name, slug),
-        product_variants (*),
-        product_images (*)
-      `)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          categories (name, slug, id),
+          product_variants (*),
+          product_images (*)
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
 
-    if (error) throw error;
-    return this._transform(data || []);
+      if (error) {
+        console.error('[ProductService] Fetch Error:', error);
+        throw error;
+      }
+      return this._transform(data || []);
+    } catch (e) {
+      console.error('[ProductService] Fatal Exception:', e);
+      return [];
+    }
   },
 
   async getBySlug(slug: string) {
