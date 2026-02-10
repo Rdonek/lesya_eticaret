@@ -9,6 +9,9 @@ import { ProductGallery } from '@/components/product/product-gallery';
 import { AccordionItem } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 type ProductDetailPageProps = {
   params: {
     slug: string;

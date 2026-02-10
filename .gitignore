@@ -26,7 +26,7 @@ yarn-error.log*
 
 # local env files
 
-lesya_mobile/
+
 
 # vercel
 .vercel

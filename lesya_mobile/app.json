@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "Lesya",
+    "slug": "lesya",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/lesya_favicon/Lesya_nobg.png",
+    "scheme": "lesya",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lesyastudio.mobile",
+      "backgroundColor": "#000000"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#000000",
+        "foregroundImage": "./assets/lesya_favicon/Lesya_nobg.png",
+        "monochromeImage": "./assets/lesya_favicon/Lesya_nobg.png"
+      },
+      "package": "com.lesyastudio.mobile",
+      "edgeToEdgeEnabled": true,
+      "backgroundColor": "#000000"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/lesya_favicon/Lesya_nobg.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/lesya_favicon/Lesya_nobg.png",
+          "imageWidth": 120,
+          "resizeMode": "contain",
+          "backgroundColor": "#000000",
+          "dark": {
+            "backgroundColor": "#000000",
+            "image": "./assets/lesya_favicon/Lesya_nobg.png"
+          }
+        }
+      ],
+      "expo-font"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e5336a34-0f0a-47c1-a365-ba7d99d34e3f"
+      }
+    },
+    "owner": "rdonek"
+  }
+}
