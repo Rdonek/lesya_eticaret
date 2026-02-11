@@ -31,7 +31,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white">
       
       {/* 1. HERO SECTION */}
       <section className="relative px-6 md:px-10 max-w-[1400px] mx-auto pt-8 md:pt-12 pb-16">
@@ -126,7 +126,7 @@ export default function HomePage() {
          </div>
 
          {/* COMPACT GRADIENT BOTTOM */}
-         <div className="w-full h-[160px] bg-gradient-to-b from-black via-white to-white"></div>
+         <div className="w-full h-[160px] bg-gradient-to-b from-black to-white"></div>
       </section>
 
     </div>

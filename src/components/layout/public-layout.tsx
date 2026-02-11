@@ -15,11 +15,9 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
   const [isAdmin, setIsAdmin] = React.useState(false);
   const supabase = createClient();
   
-  // Define routes where we don't want the public header/footer
   const isAdminRoute = pathname.startsWith('/admin') || pathname === '/login';
   const isMaintenancePage = pathname === '/bakimda';
 
-  // Check if current user is an admin (authenticated)
   React.useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -28,11 +26,9 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [supabase]);
 
-  // Handle Maintenance Mode Redirection
   React.useEffect(() => {
     if (settings) {
       const isStoreActive = settings.store_status.is_active ?? true;
-      
       if (!isStoreActive && !isAdmin && !isAdminRoute && !isMaintenancePage) {
         router.replace('/bakimda');
       } else if (isStoreActive && isMaintenancePage) {
@@ -45,15 +41,14 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // If in maintenance mode and NOT an admin, only show the maintenance page content
   if (isMaintenancePage) {
-    return <main className="flex-grow">{children}</main>;
+    return <main>{children}</main>;
   }
 
   return (
     <>
       <Header />
-      <main className="flex-grow min-h-[60vh]">
+      <main>
         {children}
       </main>
       <Footer />
