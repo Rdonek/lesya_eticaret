@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/lib/constants/routes';
 import { useToast } from '@/providers/toast-provider';
 
-export default function MockPaymentPage() {
+function PaymentContent() {
   const router = useRouter();
   const { showToast } = useToast();
   const searchParams = useSearchParams();
@@ -81,5 +81,13 @@ export default function MockPaymentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MockPaymentPage() {
+  return (
+    <React.Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-neutral-50 font-bold uppercase tracking-widest text-xs text-neutral-400">Yükleniyor...</div>}>
+      <PaymentContent />
+    </React.Suspense>
   );
 }
