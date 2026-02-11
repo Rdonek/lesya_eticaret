@@ -48,17 +48,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
-  // Show a clean loader while checking settings and auth
-  if (settingsLoading || authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <Loader2 className="h-8 w-8 animate-spin text-neutral-200" />
-      </div>
-    );
-  }
-
   // If in maintenance mode and NOT an admin, only show the maintenance page content
-  // (We skip Header/Footer for maintenance page)
   if (isMaintenancePage) {
     return <main className="flex-grow">{children}</main>;
   }
@@ -66,7 +56,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header />
-      <main className="flex-grow">
+      <main className="flex-grow min-h-[60vh]">
         {children}
       </main>
       <Footer />

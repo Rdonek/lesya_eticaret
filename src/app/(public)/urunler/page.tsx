@@ -5,6 +5,9 @@ import { ProductToolbar } from '@/components/product/product-toolbar';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 type ProductsPageProps = {
   searchParams: {
     kategori?: string;
