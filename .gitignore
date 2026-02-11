@@ -25,8 +25,12 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # local env files
+.env*.local
 
-
+# lesya specific
+/lesya_mobile
+/supabase
+/TEST_TASK.md
 
 # vercel
 .vercel

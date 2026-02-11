@@ -113,7 +113,7 @@ export default function HomePage() {
                     {[1,2,3,4].map(i => <div key={i} className="aspect-[3/4] rounded-2xl bg-white/5 animate-pulse" />)}
                 </div>
             ) : (
-                <div className="dark-grid-fallback">
+                <div className="text-white">
                     <ProductGrid products={deals} />
                 </div>
             )}
