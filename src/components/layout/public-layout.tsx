@@ -7,14 +7,12 @@ import { Footer } from './footer';
 import { MobileNav } from './mobile-nav';
 import { useSettings } from '@/hooks/use-settings';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2 } from 'lucide-react';
 
 export function PublicLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { settings, loading: settingsLoading } = useSettings();
+  const { settings } = useSettings();
   const [isAdmin, setIsAdmin] = React.useState(false);
-  const [authLoading, setAuthLoading] = React.useState(true);
   const supabase = createClient();
   
   // Define routes where we don't want the public header/footer
@@ -26,15 +24,14 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setIsAdmin(!!session);
-      setAuthLoading(false);
     };
     checkAuth();
   }, [supabase]);
 
   // Handle Maintenance Mode Redirection
   React.useEffect(() => {
-    if (!settingsLoading && !authLoading) {
-      const isStoreActive = settings?.store_status.is_active ?? true;
+    if (settings) {
+      const isStoreActive = settings.store_status.is_active ?? true;
       
       if (!isStoreActive && !isAdmin && !isAdminRoute && !isMaintenancePage) {
         router.replace('/bakimda');
@@ -42,7 +39,7 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
         router.replace('/');
       }
     }
-  }, [settings, isAdmin, isAdminRoute, isMaintenancePage, settingsLoading, authLoading, router]);
+  }, [settings, isAdmin, isAdminRoute, isMaintenancePage, router]);
 
   if (isAdminRoute) {
     return <>{children}</>;
