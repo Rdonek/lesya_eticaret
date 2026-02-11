@@ -5,111 +5,54 @@ import { Alert } from 'react-native';
 export function useStockActions() {
   const queryClient = useQueryClient();
 
-  // 1. ADD STOCK with Weighted Average Cost & Finance (AFI Engine)
+  // 1. ADD STOCK - Now using secure RPC
   const addStock = useMutation({
     mutationFn: async ({ 
-      variantId, 
-      quantity, 
-      unitCost, 
-      description 
-    }: { 
-      variantId: string; 
-      quantity: number; 
+      variantId,
+      quantity,
+      unitCost,
+      description
+    }: {
+      variantId: string;
+      quantity: number;
       unitCost: number;
       description?: string;
     }) => {
-      const newQuantity = Number(quantity);
-      const newUnitCost = Number(unitCost);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Oturum bulunamadı.');
 
-      if (newQuantity <= 0) throw new Error('Stok miktarı 0\'dan büyük olmalıdır.');
-      
-      const totalNewValue = newQuantity * newUnitCost;
+      // Execute all logic in one single database transaction
+      const { data, error } = await supabase.rpc('rpc_add_stock_entry', {
+        p_variant_id: variantId,
+        p_quantity: Number(quantity),
+        p_unit_cost: Number(unitCost),
+        p_description: description || 'Mobil Stok Girişi',
+        p_admin_id: user.id
+      });
 
-      // A. Get current stock and cost
-      const { data: variant, error: varError } = await supabase
-        .from('product_variants')
-        .select('stock, cost_price, products(name)')
-        .eq('id', variantId)
-        .single();
-
-      if (varError) throw varError;
-
-      const currentStock = variant.stock || 0;
-      const currentCost = variant.cost_price || 0;
-      const totalStockAfter = currentStock + newQuantity;
-
-      // B. Calculate Weighted Average Cost (WAC)
-      // Logic: ((Old Stock * Old Cost) + (New Stock * New Cost)) / Total Stock
-      // If total stock is 0 (first entry), use new cost.
-      const weightedAverageCost = totalStockAfter > 0 
-          ? ((currentStock * currentCost) + (newQuantity * newUnitCost)) / totalStockAfter 
-          : newUnitCost;
-
-      // C. Create Inventory Log
-      const { data: log, error: logError } = await supabase
-        .from('inventory_logs')
-        .insert({
-          product_variant_id: variantId,
-          type: 'purchase',
-          quantity: newQuantity,
-          unit_cost: newUnitCost,
-          total_value: totalNewValue,
-          description: description || 'Mobil Stok Girişi'
-        })
-        .select()
-        .single();
-
-      if (logError) throw logError;
-
-      // D. Update Variant (Stock + New Cost)
-      const { error: updateError } = await supabase
-        .from('product_variants')
-        .update({
-          stock: totalStockAfter,
-          cost_price: weightedAverageCost // Saving the calculated average
-        })
-        .eq('id', variantId);
-
-      if (updateError) throw updateError;
-
-      // E. Create Finance Record (Expense)
-      if (totalNewValue > 0) {
-        const { error: finError } = await supabase
-          .from('finances')
-          .insert({
-            type: 'expense',
-            category: 'inventory',
-            amount: totalNewValue,
-            source: 'system_purchase',
-            related_id: log.id,
-            description: `Stok Alımı: ${(variant.products as any).name || 'Ürün'} (+${newQuantity} Adet)`
-          });
-
-        if (finError) throw finError;
-      }
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['catalog'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] }); // Update low stock count
-      Alert.alert('Başarılı', 'Stok, maliyet ve finans kayıtları güncellendi.');
+      queryClient.invalidateQueries({ queryKey: ['all-variants'] });
+      queryClient.invalidateQueries({ queryKey: ['finance-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      Alert.alert('Başarılı', 'Stok ve maliyet kayıtları güvenli şekilde güncellendi.');
     },
     onError: (error) => {
       Alert.alert('Hata', 'Stok işlemi başarısız: ' + error.message);
     }
   });
 
-  // 2. BULK UPDATE (Price & Cost)
+  // 2. BULK UPDATE (Price Only - Safe to keep as direct update)
   const updateVariantDetails = useMutation({
-    mutationFn: async ({ variantId, price, costPrice }: { variantId: string, price?: number, costPrice?: number }) => {
-      const updates: any = {};
-      if (price !== undefined) updates.price = price;
-      if (costPrice !== undefined) updates.cost_price = costPrice;
-
-      if (Object.keys(updates).length === 0) return;
+    mutationFn: async ({ variantId, price }: { variantId: string, price?: number }) => {
+      if (price === undefined) return;
 
       const { error } = await supabase
         .from('product_variants')
-        .update(updates)
+        .update({ price })
         .eq('id', variantId);
       if (error) throw error;
     },
@@ -122,7 +65,6 @@ export function useStockActions() {
   return { addStock, updateVariantDetails };
 }
 
-// Hook for fetching all variants (Flat List)
 export function useAllVariants(search: string) {
   return useQuery({
     queryKey: ['all-variants', search],
@@ -136,8 +78,6 @@ export function useAllVariants(search: string) {
         .order('sku', { ascending: true });
 
       if (search) {
-        // Search on joined table is tricky in Supabase without full text search setup properly
-        // We will filter client side for MVP or use simple variant SKU search
         query = query.ilike('sku', `%${search}%`);
       }
 

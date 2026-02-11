@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { checkoutSchema, type CheckoutFormData } from '@/schemas/checkout-schema';
+import Link from 'next/link';
 
 type CheckoutFormProps = {
   onSubmit: (data: CheckoutFormData) => void;
@@ -119,6 +120,26 @@ export function CheckoutForm({ onSubmit, isSubmitting = false }: CheckoutFormPro
             />
           </div>
         </div>
+      </div>
+
+      {/* Legal Agreement Checkbox */}
+      <div className="rounded-2xl border border-neutral-100 bg-neutral-50/50 p-5">
+        <label className="flex items-start gap-3 cursor-pointer group">
+          <input
+            type="checkbox"
+            {...register('termsAccepted')}
+            className="mt-0.5 h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900 cursor-pointer shrink-0"
+          />
+          <span className="text-xs text-neutral-500 leading-relaxed group-hover:text-neutral-700 transition-colors">
+            <Link href="/mesafeli-satis-sozlesmesi" target="_blank" className="font-bold text-neutral-900 underline underline-offset-2 hover:text-neutral-600">Mesafeli Satış Sözleşmesi</Link>
+            {"'"}ni ve{' '}
+            <Link href="/gizlilik" target="_blank" className="font-bold text-neutral-900 underline underline-offset-2 hover:text-neutral-600">Gizlilik Politikası</Link>
+            {"'"}nı okudum, kabul ediyorum.
+          </span>
+        </label>
+        {errors.termsAccepted && (
+          <p className="mt-2 text-xs font-medium text-red-500 pl-7">{errors.termsAccepted.message}</p>
+        )}
       </div>
 
       <Button

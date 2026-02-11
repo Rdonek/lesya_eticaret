@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { Alert } from 'react-native';
+import { Database } from '@/types/database';
 
 export type CatalogProduct = {
-  id: string; // original product id
+  id: string;
   name: string;
   base_price: number;
   categoryName: string;
@@ -12,14 +13,10 @@ export type CatalogProduct = {
   totalStock: number;
   isActive: boolean;
   variantsCount: number;
-  hasOrders: boolean; // To decide if we can delete or just archive
+  hasOrders: boolean;
 };
 
-export type Category = {
-  id: string;
-  name: string;
-  slug: string;
-};
+export type Category = Database['public']['Tables']['categories']['Row'];
 
 export function useCatalog(searchQuery: string, categoryId: string | null) {
   return useQuery({
@@ -46,12 +43,9 @@ export function useCatalog(searchQuery: string, categoryId: string | null) {
       const { data, error } = await query;
       if (error) throw error;
 
-      // Transform for UI
-      return data.map((p: any) => {
+      return (data as any[]).map((p) => {
         const totalStock = p.product_variants?.reduce((sum: number, v: any) => sum + (v.stock || 0), 0) || 0;
         const mainImage = p.product_images?.sort((a: any, b: any) => a.display_order - b.display_order)[0]?.url;
-
-        // Check if product has any orders (to disable delete)
         const hasOrders = p.product_variants?.some((v: any) => v.order_items?.[0]?.count > 0);
 
         return {
@@ -88,7 +82,6 @@ export function useCategories() {
 export function useCatalogActions() {
   const queryClient = useQueryClient();
 
-  // Toggle Archive Status
   const toggleStatus = useMutation({
     mutationFn: async ({ id, currentStatus }: { id: string, currentStatus: boolean }) => {
       const { error } = await supabase

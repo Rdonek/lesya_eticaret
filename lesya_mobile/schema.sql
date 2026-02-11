@@ -13,7 +13,21 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 
+CREATE EXTENSION IF NOT EXISTS "pg_net" WITH SCHEMA "extensions";
+
+
+
+
+
+
 COMMENT ON SCHEMA "public" IS 'standard public schema';
+
+
+
+CREATE EXTENSION IF NOT EXISTS "http" WITH SCHEMA "extensions";
+
+
+
 
 
 
@@ -124,6 +138,20 @@ $$;
 
 
 ALTER FUNCTION "public"."confirm_stock_deduction"("variant_id" "uuid", "qty" integer) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+    INSERT INTO public.profiles (id, full_name)
+    VALUES (NEW.id, NEW.raw_user_meta_data->>'full_name');
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."increment_reserved_stock"("variant_id" "uuid", "qty" integer) RETURNS "void"
@@ -261,6 +289,76 @@ CREATE OR REPLACE FUNCTION "public"."record_sale_income"() RETURNS "trigger"
 
 
 ALTER FUNCTION "public"."record_sale_income"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."send_push_notification_via_expo"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+    push_tokens TEXT[];
+    image_url TEXT;
+    expo_response record;
+    payload JSONB;
+BEGIN
+    -- 1. Extract image URL
+    image_url := NEW.data->>'image_url';
+
+    -- 2. Collect target admin tokens
+    IF NEW.user_id IS NOT NULL THEN
+        SELECT ARRAY[push_token] INTO push_tokens 
+        FROM public.profiles 
+        WHERE id = NEW.user_id AND push_token IS NOT NULL;
+    ELSE
+        SELECT array_agg(push_token) INTO push_tokens 
+        FROM public.profiles 
+        WHERE push_token IS NOT NULL;
+    END IF;
+
+    -- 3. Exit if no tokens found
+    IF push_tokens IS NULL OR array_length(push_tokens, 1) = 0 THEN
+        RETURN NEW;
+    END IF;
+
+    -- 4. Loop through tokens and send
+    FOR i IN 1 .. array_length(push_tokens, 1) LOOP
+        IF push_tokens[i] IS NOT NULL THEN
+            
+            -- Prepare the payload
+            payload := jsonb_build_object(
+                'to', push_tokens[i],
+                'title', NEW.title,
+                'body', NEW.body,
+                'sound', 'default',
+                'channelId', 'default', -- CRITICAL FOR ANDROID APK
+                'priority', 'high',
+                'mutableContent', true,
+                'data', jsonb_build_object(
+                    'notificationId', NEW.id,
+                    'type', NEW.type,
+                    'related_id', NEW.related_id
+                ) || COALESCE(NEW.data, '{}'::jsonb)
+            );
+
+            -- Send and Catch Result
+            SELECT status, content INTO expo_response FROM extensions.http_post(
+                'https://exp.host/--/api/v2/push/send',
+                payload::text,
+                'application/json'
+            );
+
+            -- Log the result for debugging
+            INSERT INTO public.push_logs (notification_id, token, response_status, response_body)
+            VALUES (NEW.id, push_tokens[i], expo_response.status, expo_response.content);
+
+        END IF;
+    END LOOP;
+
+    RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."send_push_notification_via_expo"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."sync_customer_on_order"() RETURNS "trigger"
@@ -489,6 +587,30 @@ CREATE TABLE IF NOT EXISTS "public"."products" (
 ALTER TABLE "public"."products" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."profiles" (
+    "id" "uuid" NOT NULL,
+    "push_token" "text",
+    "full_name" "text",
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."profiles" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."push_logs" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "notification_id" "uuid",
+    "token" "text",
+    "response_status" integer,
+    "response_body" "text",
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."push_logs" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."returns" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "order_id" "uuid",
@@ -607,6 +729,16 @@ ALTER TABLE ONLY "public"."products"
 
 
 
+ALTER TABLE ONLY "public"."profiles"
+    ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."push_logs"
+    ADD CONSTRAINT "push_logs_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."returns"
     ADD CONSTRAINT "returns_pkey" PRIMARY KEY ("id");
 
@@ -662,6 +794,10 @@ CREATE INDEX "idx_products_slug" ON "public"."products" USING "btree" ("slug");
 
 
 CREATE INDEX "idx_returns_order_id" ON "public"."returns" USING "btree" ("order_id");
+
+
+
+CREATE OR REPLACE TRIGGER "on_notification_created_send_push" AFTER INSERT ON "public"."notifications" FOR EACH ROW EXECUTE FUNCTION "public"."send_push_notification_via_expo"();
 
 
 
@@ -757,6 +893,11 @@ ALTER TABLE ONLY "public"."products"
 
 
 
+ALTER TABLE ONLY "public"."profiles"
+    ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."returns"
     ADD CONSTRAINT "returns_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id");
 
@@ -839,11 +980,15 @@ CREATE POLICY "Returns are viewable by admins" ON "public"."returns" TO "authent
 
 
 
-CREATE POLICY "Users can delete own notifications" ON "public"."notifications" FOR DELETE USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can delete own notifications" ON "public"."notifications" FOR DELETE TO "authenticated" USING ((("auth"."uid"() = "user_id") OR ("user_id" IS NULL)));
 
 
 
-CREATE POLICY "Users can update own notifications" ON "public"."notifications" FOR UPDATE USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can manage own profile" ON "public"."profiles" TO "authenticated" USING (("auth"."uid"() = "id")) WITH CHECK (("auth"."uid"() = "id"));
+
+
+
+CREATE POLICY "Users can update own notifications" ON "public"."notifications" FOR UPDATE TO "authenticated" USING ((("auth"."uid"() = "user_id") OR ("user_id" IS NULL))) WITH CHECK ((("auth"."uid"() = "user_id") OR ("user_id" IS NULL)));
 
 
 
@@ -884,6 +1029,9 @@ ALTER TABLE "public"."product_variants" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."products" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."returns" ENABLE ROW LEVEL SECURITY;
 
 
@@ -893,6 +1041,9 @@ ALTER TABLE "public"."store_settings" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
+
+
+
 
 
 GRANT USAGE ON SCHEMA "public" TO "postgres";
@@ -1052,9 +1203,72 @@ GRANT USAGE ON SCHEMA "public" TO "service_role";
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 GRANT ALL ON FUNCTION "public"."confirm_stock_deduction"("variant_id" "uuid", "qty" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."confirm_stock_deduction"("variant_id" "uuid", "qty" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."confirm_stock_deduction"("variant_id" "uuid", "qty" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
 
 
 
@@ -1085,6 +1299,12 @@ GRANT ALL ON FUNCTION "public"."notify_order_status_change"() TO "service_role";
 GRANT ALL ON FUNCTION "public"."record_sale_income"() TO "anon";
 GRANT ALL ON FUNCTION "public"."record_sale_income"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."record_sale_income"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."send_push_notification_via_expo"() TO "anon";
+GRANT ALL ON FUNCTION "public"."send_push_notification_via_expo"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."send_push_notification_via_expo"() TO "service_role";
 
 
 
@@ -1178,6 +1398,18 @@ GRANT ALL ON TABLE "public"."product_variants" TO "service_role";
 GRANT ALL ON TABLE "public"."products" TO "anon";
 GRANT ALL ON TABLE "public"."products" TO "authenticated";
 GRANT ALL ON TABLE "public"."products" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."profiles" TO "anon";
+GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
+GRANT ALL ON TABLE "public"."profiles" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."push_logs" TO "anon";
+GRANT ALL ON TABLE "public"."push_logs" TO "authenticated";
+GRANT ALL ON TABLE "public"."push_logs" TO "service_role";
 
 
 

@@ -1,4 +1,5 @@
 import { AnimatedSplashScreen } from "@/components/shared/AnimatedSplash";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { useAuth } from "@/hooks/use-auth";
 import { usePushToken } from "@/hooks/use-push-token";
 import { queryClient } from "@/lib/query-client";
@@ -15,7 +16,6 @@ import "../assets/global.css";
 SplashScreen.preventAutoHideAsync();
 
 // --- NOTIFICATION HANDLER ---
-// Uygulama aÃ§Ä±kken bildirim gelince ne olacaÄŸÄ±nÄ± belirler
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -32,10 +32,7 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
 
-  // Initialize Auth Listener
   useAuth();
-  
-  // Initialize Push Notifications
   usePushToken();
 
   useEffect(() => {
@@ -65,10 +62,12 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <RootLayoutNav />
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <RootLayoutNav />
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

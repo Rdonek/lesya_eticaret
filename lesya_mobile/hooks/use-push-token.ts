@@ -94,8 +94,12 @@ async function registerForPushNotificationsAsync() {
     }
     if (finalStatus !== 'granted') return;
     
-    const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId;
+    const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId || "e5336a34-0f0a-47c1-a365-ba7d99d34e3f";
+    
+    console.log('[Push] Using Project ID for Token:', projectId);
+    
     token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+    console.log('[Push] Generated Token:', token);
   }
   return token;
 }

@@ -31,6 +31,8 @@ export function Footer() {
             )}
             <Link href="/iade" className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-neutral-900 transition-colors">İade</Link>
             <Link href="/gizlilik" className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-neutral-900 transition-colors">Gizlilik</Link>
+            <Link href="/kullanim-kosullari" className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-neutral-900 transition-colors">Kullanım Koşulları</Link>
+            <Link href="/mesafeli-satis-sozlesmesi" className="text-[10px] font-bold uppercase tracking-widest text-neutral-500 hover:text-neutral-900 transition-colors">Mesafeli Satış</Link>
           </nav>
 
           {/* Social Icons */}

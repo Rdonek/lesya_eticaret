@@ -49,9 +49,27 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/lesya_favicon/android/res/mipmap-xxxhdpi/lesya_launcher_monochrome.png",
+          "icon": "./assets/lesya_favicon/Lesya_nobg.png",
           "color": "#000000",
           "defaultChannel": "default"
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "FinanceWidget",
+              "label": "Lesya Finans Takip",
+              "description": "Günlük kâr ve ciro durumunu ana ekranınızda görün.",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "updatePeriodMillis": 1800000,
+              "resourceName": "finance_widget"
+            }
+          ]
         }
       ]
     ],

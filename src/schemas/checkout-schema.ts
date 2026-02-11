@@ -10,6 +10,9 @@ export const checkoutSchema = z.object({
   address: z.string().min(10, 'Lütfen açık adresinizi tam olarak giriniz'),
   city: z.string().min(2, 'Şehir adı en az 2 karakter olmalıdır'),
   postalCode: z.string().optional(),
+  termsAccepted: z.literal(true, {
+    message: 'Sözleşmeleri kabul etmeniz gerekmektedir.',
+  }),
 });
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;
