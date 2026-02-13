@@ -6,6 +6,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Lesya | Kadın Giyim",
   description: "Modern kadının zamansız gardırobu.",
+  verification: {
+    other: {
+      'facebook-domain-verification': ['o7ykh6znp9p550qi9are5drcnb6mx2'],
+    },
+  },
 };
 
 export default function RootLayout({

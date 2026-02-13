@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/store/cart-store';
 import { useToast } from '@/providers/toast-provider';
+import { usePixel } from '@/hooks/use-pixel';
 import { cn } from '@/lib/utils';
 
 type Variant = {
@@ -20,6 +21,7 @@ type ProductActionsProps = {
 };
 
 export function ProductActions({ product, variants }: ProductActionsProps) {
+  const { track } = usePixel();
   // Get unique sizes and sort them (S, M, L logic is tricky without explicit order, so alpha sort for now)
   const sizes = Array.from(new Set(variants.map((v) => v.size).filter(Boolean))).sort();
   
@@ -43,7 +45,18 @@ export function ProductActions({ product, variants }: ProductActionsProps) {
     if (!selectedVariant) return;
 
     setLoading(true);
+
+    // Track Meta AddToCart Event
+    track('AddToCart', {
+      content_name: product.name,
+      content_ids: [product.id],
+      content_type: 'product',
+      value: product.base_price,
+      currency: 'TRY'
+    }, `atc_${selectedVariant.id}_${Date.now()}`);
     
+    const availableStock = selectedVariant.stock - selectedVariant.reserved_stock;
+
     addItem({
       variantId: selectedVariant.id,
       productId: product.id,
@@ -52,6 +65,7 @@ export function ProductActions({ product, variants }: ProductActionsProps) {
       quantity: 1,
       image: product.product_images?.[0]?.url,
       size: selectedSize,
+      stock: availableStock
     });
 
     setTimeout(() => {

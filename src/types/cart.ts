@@ -7,6 +7,7 @@ export type CartItem = {
   size?: string | null;
   color?: string | null;
   quantity: number;
+  stock: number;
 };
 
 export type Cart = {

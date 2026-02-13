@@ -50,6 +50,11 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const addToCart = (variantId: string, size?: string) => {
     setLoading(true);
+    
+    // Find the variant to get its stock
+    const variant = sortedVariants.find(v => v.id === variantId) || sortedVariants[0];
+    const availableStock = variant ? (variant.stock - variant.reserved_stock) : 99;
+
     addItem({
       variantId: variantId,
       productId: product.originalId || product.id,
@@ -58,7 +63,8 @@ export function ProductCard({ product }: ProductCardProps) {
       quantity: 1,
       image: product.image,
       size: size,
-      color: product.displayColor
+      color: product.displayColor,
+      stock: availableStock
     });
 
     setTimeout(() => {

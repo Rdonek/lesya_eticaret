@@ -57,9 +57,11 @@ The "Brain" of Lesya. It automates your bookkeeping:
 3. **Set up Environment Variables:**
    Create a `.env.local` file and add:
    ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   NEXT_PUBLIC_SUPABASE_URL=your_public_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_public_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   RESEND_API_KEY=your_resend_api_key
+   NEXT_PUBLIC_SITE_URL=your_site_url
    ```
 
 4. **Run Migrations:**

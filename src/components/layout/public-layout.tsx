@@ -5,6 +5,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Header } from './header';
 import { Footer } from './footer';
 import { MobileNav } from './mobile-nav';
+import { CookieConsent } from './cookie-consent';
+import { PixelTracker } from '../marketing/pixel-tracker';
 import { useSettings } from '@/hooks/use-settings';
 import { createClient } from '@/lib/supabase/client';
 
@@ -53,6 +55,8 @@ export function PublicLayout({ children }: { children: React.ReactNode }) {
       </main>
       <Footer />
       <MobileNav />
+      <CookieConsent />
+      <PixelTracker />
     </div>
   );
 }

@@ -79,7 +79,8 @@ export function CartItem({ item, onUpdateQuantity, onRemove }: CartItemProps) {
             <button
               type="button"
               onClick={handleIncrease}
-              className="h-full px-3 text-neutral-500 hover:text-neutral-900 transition-colors"
+              className="h-full px-3 text-neutral-500 hover:text-neutral-900 disabled:opacity-30 transition-colors"
+              disabled={item.quantity >= item.stock}
             >
               <Plus className="h-3 w-3" />
             </button>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ORDER_STATUS } from '@/lib/constants/order-status';
+import { metaService } from '@/lib/services/meta-service';
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +17,13 @@ export async function POST(request: Request) {
     if (success) {
       // 1. PAYMENT SUCCESS
       
+      // Fetch order details first for Meta CAPI and other actions
+      const { data: order } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single();
+
       // Update Order Status -> PAID
       const { error: updateError } = await supabase
         .from('orders')
@@ -34,6 +42,29 @@ export async function POST(request: Request) {
         new_status: ORDER_STATUS.PAID,
         note: 'Mock payment successful'
       });
+
+      // --- META CAPI PURCHASE EVENT ---
+      if (order && order.checkout_id) {
+        await metaService.sendEvent(
+          'Purchase',
+          order.checkout_id, // Same ID as Browser Pixel for Deduplication
+          {
+            email: order.email,
+            phone: order.phone,
+            firstName: order.customer_name?.split(' ')[0],
+            lastName: order.customer_name?.split(' ').slice(1).join(' '),
+            city: order.city,
+            zip: order.postal_code || undefined,
+            clientIpAddress: request.headers.get('x-forwarded-for') || '0.0.0.0',
+            clientUserAgent: request.headers.get('user-agent') || '',
+          },
+          {
+            value: order.total_amount,
+            currency: 'TRY',
+            orderId: order.order_number
+          }
+        );
+      }
 
       // PERMANENT STOCK DECREASE
       const { data: items } = await supabase

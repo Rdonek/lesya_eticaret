@@ -31,12 +31,13 @@ export default function CheckoutPage() {
 
   const subtotal = getTotal();
 
-  const handleCheckoutSubmit = async (data: CheckoutFormData) => {
+  const handleCheckoutSubmit = async (data: CheckoutFormData & { checkoutId: string }) => {
     setIsSubmitting(true);
     try {
       const payload = {
         cartItems: items,
-        customer: data
+        customer: data,
+        checkoutId: data.checkoutId // CRITICAL: Link browser session to server purchase
       };
 
       const response = await fetch('/api/create-payment', {

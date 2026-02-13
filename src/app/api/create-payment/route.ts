@@ -6,7 +6,7 @@ import { ORDER_STATUS } from '@/lib/constants/order-status';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { cartItems, customer } = body;
+    const { cartItems, customer, checkoutId } = body;
     
     if (!cartItems || cartItems.length === 0) {
       return NextResponse.json({ error: 'Sepet boş' }, { status: 400 });
@@ -77,7 +77,8 @@ export async function POST(request: Request) {
         shipping_cost: shippingCost,
         total_amount: totalAmount,
         status: ORDER_STATUS.PENDING,
-        payment_id: mockPaymentId
+        payment_id: mockPaymentId,
+        checkout_id: checkoutId // Store for Meta CAPI
       })
       .select()
       .single();

@@ -7,23 +7,55 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { checkoutSchema, type CheckoutFormData } from '@/schemas/checkout-schema';
 import Link from 'next/link';
+import { trackServerEvent } from '@/app/actions/marketing';
+import { usePixel } from '@/hooks/use-pixel';
 
 type CheckoutFormProps = {
-  onSubmit: (data: CheckoutFormData) => void;
+  onSubmit: (data: CheckoutFormData & { checkoutId: string }) => void;
   isSubmitting?: boolean;
 };
 
 export function CheckoutForm({ onSubmit, isSubmitting = false }: CheckoutFormProps) {
+  const { track } = usePixel();
+  // Generate a unique ID for this checkout session to match Browser & Server events
+  const [checkoutId] = React.useState(`chk_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`);
+  const [hasSentInit, setHasSentInit] = React.useState(false);
+
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
   } = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
   });
 
+  // Captures user data early (InitiateCheckout) for abandoned cart recovery
+  const handleAdvancedMatching = async () => {
+    if (hasSentInit) return;
+    
+    const values = getValues();
+    // Only send if we have at least one piece of identifiable info
+    if (values.email || values.phone || values.name) {
+      setHasSentInit(true);
+      
+      // 1. Client-Side Pixel
+      track('InitiateCheckout', {}, checkoutId);
+
+      // 2. Server-Side CAPI (Secure & Persistent)
+      await trackServerEvent('InitiateCheckout', checkoutId, {
+        email: values.email,
+        phone: values.phone,
+        firstName: values.name?.split(' ')[0],
+        lastName: values.name?.split(' ').slice(1).join(' '),
+        city: values.city,
+        zip: values.postalCode || undefined
+      });
+    }
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+    <form onSubmit={handleSubmit((data) => onSubmit({ ...data, checkoutId }))} className="space-y-8">
       <div className="space-y-6">
         <div>
           <label htmlFor="name" className="mb-2 block text-xs font-bold uppercase tracking-wider text-neutral-500">
@@ -33,6 +65,7 @@ export function CheckoutForm({ onSubmit, isSubmitting = false }: CheckoutFormPro
             id="name"
             placeholder="Adınız Soyadınız"
             {...register('name')}
+            onBlur={handleAdvancedMatching}
             aria-invalid={!!errors.name}
             className={errors.name ? 'border-red-500 focus-visible:ring-red-500' : ''}
           />
@@ -50,6 +83,7 @@ export function CheckoutForm({ onSubmit, isSubmitting = false }: CheckoutFormPro
             type="email"
             placeholder="ornek@email.com"
             {...register('email')}
+            onBlur={handleAdvancedMatching}
             aria-invalid={!!errors.email}
             className={errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}
           />
@@ -68,6 +102,7 @@ export function CheckoutForm({ onSubmit, isSubmitting = false }: CheckoutFormPro
             placeholder="05xxxxxxxxx"
             maxLength={11}
             {...register('phone')}
+            onBlur={handleAdvancedMatching}
             aria-invalid={!!errors.phone}
             className={errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}
           />

@@ -7,6 +7,7 @@ import { ProductGrid } from '@/components/product/product-grid';
 import { ProductActions } from '@/components/product/product-actions';
 import { ProductGallery } from '@/components/product/product-gallery';
 import { AccordionItem } from '@/components/ui/accordion';
+import { EventTracker } from '@/components/marketing/event-tracker';
 import { cn } from '@/lib/utils';
 
 export const revalidate = 60; // 1 minute cache is enough for a smooth balance
@@ -49,6 +50,17 @@ export default async function ProductDetailPage({ params, searchParams }: Produc
 
   return (
     <div className="bg-white pb-32">
+      <EventTracker 
+        eventName="ViewContent" 
+        data={{
+          content_name: product.name,
+          content_ids: [product.id],
+          content_type: 'product',
+          value: product.base_price,
+          currency: 'TRY'
+        }}
+        eventId={`vc_${product.id}`}
+      />
       <div className="mx-auto max-w-[1400px] px-6 md:px-10 pt-8 md:pt-16">
         
         {/* Minimal Breadcrumb */}

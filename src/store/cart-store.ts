@@ -25,10 +25,20 @@ export const useCartStore = create<CartStore>()(
 
         if (existingItemIndex > -1) {
           const updatedItems = [...currentItems];
-          updatedItems[existingItemIndex].quantity += newItem.quantity;
+          const existingItem = updatedItems[existingItemIndex];
+          
+          // Stock Check: Don't exceed available stock
+          const newTotalQuantity = existingItem.quantity + newItem.quantity;
+          updatedItems[existingItemIndex].quantity = Math.min(newTotalQuantity, existingItem.stock);
+          
           set({ items: updatedItems });
         } else {
-          set({ items: [...currentItems, newItem] });
+          // Double check: ensure initial quantity doesn't exceed stock
+          const safeNewItem = {
+            ...newItem,
+            quantity: Math.min(newItem.quantity, newItem.stock)
+          };
+          set({ items: [...currentItems, safeNewItem] });
         }
       },
 
@@ -39,14 +49,21 @@ export const useCartStore = create<CartStore>()(
       },
 
       updateQuantity: (variantId, quantity) => {
+        const currentItems = get().items;
+        const item = currentItems.find(i => i.variantId === variantId);
+        
+        if (!item) return;
         if (quantity <= 0) {
           get().removeItem(variantId);
           return;
         }
 
+        // Clamp quantity to available stock
+        const safeQuantity = Math.min(quantity, item.stock);
+
         set({
-          items: get().items.map((item) =>
-            item.variantId === variantId ? { ...item, quantity } : item
+          items: currentItems.map((i) =>
+            i.variantId === variantId ? { ...i, quantity: safeQuantity } : i
           ),
         });
       },

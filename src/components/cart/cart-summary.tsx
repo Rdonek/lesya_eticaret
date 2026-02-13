@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/utils/format';
 import { useSettings } from '@/hooks/use-settings';
+import { usePixel } from '@/hooks/use-pixel';
 
 type CartSummaryProps = {
   subtotal: number;
@@ -11,6 +12,7 @@ type CartSummaryProps = {
 };
 
 export function CartSummary({ subtotal, onCheckout }: CartSummaryProps) {
+  const { track } = usePixel();
   const { settings, loading } = useSettings();
   
   // Defaults while loading or if error
@@ -19,6 +21,17 @@ export function CartSummary({ subtotal, onCheckout }: CartSummaryProps) {
 
   const shipping = subtotal >= freeThreshold ? 0 : shippingFee;
   const total = subtotal + shipping;
+
+  const handleCheckoutClick = () => {
+    // Track InitiateCheckout on button click
+    track('InitiateCheckout', {
+      value: total,
+      currency: 'TRY',
+      num_items: 1 // Optional: can be derived from cart count
+    }, `init_${Date.now()}`);
+
+    if (onCheckout) onCheckout();
+  };
 
   if (loading) return <div className="h-48 animate-pulse rounded-2xl bg-neutral-100" />;
 
@@ -61,7 +74,7 @@ export function CartSummary({ subtotal, onCheckout }: CartSummaryProps) {
       <Button
         variant="primary"
         size="lg"
-        onClick={onCheckout}
+        onClick={handleCheckoutClick}
         className="mt-8 w-full"
         disabled={subtotal === 0}
       >
